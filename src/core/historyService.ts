@@ -17,10 +17,18 @@ export interface HistoryFilter {
 
 export class HistoryService {
   private context: vscode.ExtensionContext | null = null;
+  private workspaceRoot: string | undefined;
   private pendingGraphHistory = new Map<string, ExecutionGraphHistory>();
 
   initialize(context: vscode.ExtensionContext): void {
     this.context = context;
+    this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    void this.compactStoredHistory();
+  }
+
+  setWorkspaceRoot(workspaceRoot: string | undefined): void {
+    if (this.workspaceRoot === workspaceRoot) return;
+    this.workspaceRoot = workspaceRoot;
     void this.compactStoredHistory();
   }
 
@@ -33,12 +41,12 @@ export class HistoryService {
     }
     const history = this.getAll();
     history.unshift(record);
-    await this.context.globalState.update(HISTORY_KEY, history.slice(0, MAX_RECORDS));
+    await this.context.workspaceState.update(this.storageKey(), history.slice(0, MAX_RECORDS));
   }
 
   getAll(): ExecutionRecord[] {
     if (!this.context) return [];
-    return this.context.globalState.get<ExecutionRecord[]>(HISTORY_KEY, []);
+    return this.context.workspaceState.get<ExecutionRecord[]>(this.storageKey(), []);
   }
 
   getAllForWebview(): ExecutionRecord[] {
@@ -68,7 +76,7 @@ export class HistoryService {
     if (!this.context) return;
     const idsToDelete = new Set(ids);
     const history = this.getAll().filter((r) => !idsToDelete.has(r.id));
-    await this.context.globalState.update(HISTORY_KEY, history);
+    await this.context.workspaceState.update(this.storageKey(), history);
   }
 
   async updateGraphHistory(id: string, graphHistory: ExecutionGraphHistory): Promise<void> {
@@ -81,12 +89,12 @@ export class HistoryService {
       this.pendingGraphHistory.set(id, graphHistory);
       return;
     }
-    await this.context.globalState.update(HISTORY_KEY, history);
+    await this.context.workspaceState.update(this.storageKey(), history);
   }
 
   async clear(): Promise<void> {
     if (!this.context) return;
-    await this.context.globalState.update(HISTORY_KEY, []);
+    await this.context.workspaceState.update(this.storageKey(), []);
   }
 
   private compactForWebview(record: ExecutionRecord): ExecutionRecord {
@@ -146,8 +154,12 @@ export class HistoryService {
     });
 
     if (changed || compacted.length > MAX_RECORDS) {
-      await this.context.globalState.update(HISTORY_KEY, compacted.slice(0, MAX_RECORDS));
+      await this.context.workspaceState.update(this.storageKey(), compacted.slice(0, MAX_RECORDS));
     }
+  }
+
+  private storageKey(): string {
+    return this.workspaceRoot ? `${HISTORY_KEY}.${this.workspaceRoot}` : HISTORY_KEY;
   }
 }
 
