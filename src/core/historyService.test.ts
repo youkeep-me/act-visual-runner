@@ -86,4 +86,17 @@ describe('HistoryService', () => {
       []
     );
   });
+
+  it('deve deletar múltiplos registros por ID', async () => {
+    const cancelled: ExecutionRecord = { ...sample, id: 'exec-002', status: 'cancelled' };
+    const failed: ExecutionRecord = { ...sample, id: 'exec-003', status: 'failed' };
+    (mockContext.globalState.get as jest.Mock).mockReturnValue([sample, cancelled, failed]);
+
+    await service.deleteByIds(['exec-001', 'exec-003']);
+
+    expect(mockContext.globalState.update).toHaveBeenCalledWith(
+      'actRunner.executionHistory',
+      [expect.objectContaining({ id: 'exec-002' })]
+    );
+  });
 });

@@ -46,7 +46,12 @@ export function ControlBar() {
           <button
             key={view}
             style={{ ...styles.tab, ...(currentView === view ? styles.tabActive : {}) }}
-            onClick={() => setView(view)}
+            onClick={() => {
+              setView(view);
+              if (view === 'history') {
+                window.__vscode__?.postMessage({ type: 'command:refreshHistory', payload: {} });
+              }
+            }}
           >
             {VIEW_LABELS[view]}
           </button>

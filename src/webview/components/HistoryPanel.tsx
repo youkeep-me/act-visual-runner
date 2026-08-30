@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useExecutionStore } from '../store/executionStore';
 import { t } from '../i18n';
 
@@ -16,12 +16,22 @@ export function HistoryPanel() {
   const [logSearchQuery, setLogSearchQuery] = useState('');
   const [activeLogMatchIndex, setActiveLogMatchIndex] = useState(0);
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const rerun = (id: string) =>
     window.__vscode__?.postMessage({ type: 'command:rerun', payload: { executionId: id } });
 
   const deleteEntry = (id: string) =>
     window.__vscode__?.postMessage({ type: 'command:deleteHistory', payload: { executionId: id } });
+
+  const deleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    window.__vscode__?.postMessage({
+      type: 'command:deleteHistories',
+      payload: { executionIds: Array.from(selectedIds) },
+    });
+    setSelectedIds(new Set());
+  };
 
   const restoreExecution = (id: string) => {
     if (isWorkflowRunning) return;
@@ -46,6 +56,17 @@ export function HistoryPanel() {
   const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pagedHistory = filteredHistory.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pagedIds = pagedHistory.map((record) => record.id);
+  const selectedOnPage = pagedIds.filter((id) => selectedIds.has(id));
+  const allPageSelected = pagedIds.length > 0 && selectedOnPage.length === pagedIds.length;
+
+  useEffect(() => {
+    const historyIds = new Set(history.map((record) => record.id));
+    setSelectedIds((current) => {
+      const next = new Set(Array.from(current).filter((id) => historyIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [history]);
 
   const updateQuery = (value: string) => {
     setQuery(value);
@@ -75,7 +96,31 @@ export function HistoryPanel() {
 
       <div style={styles.table}>
         <div style={styles.tableHeader}>
-          <span>{filteredHistory.length} workflow {filteredHistory.length === 1 ? 'run' : 'runs'}</span>
+          <div style={styles.headerActions}>
+            <label style={styles.selectAll}>
+              <input
+                type="checkbox"
+                checked={allPageSelected}
+                onChange={(event) => {
+                  setSelectedIds((current) => {
+                    const next = new Set(current);
+                    pagedIds.forEach((id) => event.target.checked ? next.add(id) : next.delete(id));
+                    return next;
+                  });
+                }}
+                aria-label={t('Select all runs on this page')}
+              />
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : `${filteredHistory.length} workflow ${filteredHistory.length === 1 ? 'run' : 'runs'}`}
+            </label>
+            <button
+              type="button"
+              style={{ ...styles.pageButton, ...styles.dangerButton }}
+              disabled={selectedIds.size === 0}
+              onClick={deleteSelected}
+            >
+              {t('Delete selected')}
+            </button>
+          </div>
           <span style={styles.headerColumns}>Workflow · Event · Status · Branch · Action</span>
         </div>
 
@@ -98,6 +143,20 @@ export function HistoryPanel() {
                 onClick={canOpenGraph ? () => restoreExecution(r.id) : undefined}
                 title={historyRowTitle(canRestoreGraph, isWorkflowRunning)}
               >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(r.id)}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => {
+                    setSelectedIds((current) => {
+                      const next = new Set(current);
+                      if (event.target.checked) next.add(r.id);
+                      else next.delete(r.id);
+                      return next;
+                    });
+                  }}
+                  aria-label={`${t('Select run')} ${r.workflowName}`}
+                />
                 <span style={{ color: statusColor(r.status), fontSize: 14 }}>{statusIcon(r.status)}</span>
                 <div style={styles.runMain}>
                   <div style={styles.runTitle}>{r.workflowName}</div>
@@ -295,6 +354,8 @@ const styles: Record<string, React.CSSProperties> = {
   table: { border: '1px solid #30363d', borderRadius: 6, overflow: 'visible', background: '#0d1117' },
   tableHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid #30363d', background: '#161b22', color: '#c9d1d9', fontSize: 12, fontWeight: 600 },
   headerColumns: { color: '#8b949e', fontWeight: 500 },
+  headerActions: { display: 'flex', alignItems: 'center', gap: 12 },
+  selectAll: { display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' },
   row: { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid #21262d', fontSize: 12, color: '#c9d1d9', position: 'relative' },
   clickableRow: { cursor: 'pointer' },
   runMain: { flex: 1, minWidth: 220 },
@@ -312,6 +373,7 @@ const styles: Record<string, React.CSSProperties> = {
   noResults: { padding: 24, color: '#8b949e', textAlign: 'center', fontSize: 12 },
   pagination: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 0' },
   pageButton: { padding: '5px 12px', border: '1px solid #30363d', borderRadius: 6, background: '#161b22', color: '#c9d1d9', cursor: 'pointer', fontSize: 12 },
+  dangerButton: { color: '#f85149' },
   pageInfo: { color: '#8b949e', fontSize: 12 },
   logPanel: { background: '#010409', borderBottom: '1px solid #21262d', maxHeight: 360, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
   logSearchBar: { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderBottom: '1px solid #21262d', background: '#0d1117' },

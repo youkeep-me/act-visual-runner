@@ -61,8 +61,13 @@ export class HistoryService {
   }
 
   async deleteById(id: string): Promise<void> {
+    await this.deleteByIds([id]);
+  }
+
+  async deleteByIds(ids: string[]): Promise<void> {
     if (!this.context) return;
-    const history = this.getAll().filter((r) => r.id !== id);
+    const idsToDelete = new Set(ids);
+    const history = this.getAll().filter((r) => !idsToDelete.has(r.id));
     await this.context.globalState.update(HISTORY_KEY, history);
   }
 

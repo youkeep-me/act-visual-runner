@@ -96,4 +96,6 @@ export type WebviewCommand =
   | { type: 'command:selectEnvFile'; payload: { tab: string } }
   | { type: 'command:saveEnv';      payload: { tab: string; rows: { key: string; value: string }[]; filePath?: string } }
   | { type: 'command:deleteHistory'; payload: { executionId: string } }
+  | { type: 'command:deleteHistories'; payload: { executionIds: string[] } }
+  | { type: 'command:refreshHistory'; payload: Record<string, never> }
   | { type: 'state:request';        payload: Record<string, never> };
