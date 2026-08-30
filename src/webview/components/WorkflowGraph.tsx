@@ -526,9 +526,25 @@ export function WorkflowGraph({ showHeader = true }: WorkflowGraphProps) {
   const canvasH = Math.max(320, ...allPos.map(p => p.y + HDR_H * 4 + PAD));
 
   const toggleOuter = (id: string) =>
-    setExpandedOuter(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpandedOuter(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
+      return n;
+    });
   const toggleInner = (id: string) =>
-    setExpandedInner(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpandedInner(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
+      return n;
+    });
 
   const allJobs = [...outerJobs, ...innerJobs];
   const runningCount = allJobs.filter(j => j.status === 'running').length;

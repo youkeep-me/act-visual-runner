@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as childProcess from 'child_process';
 import { actRunner } from './core/actRunner';
 import { executionEngine } from './core/executionEngine';
 import { historyService } from './core/historyService';
@@ -76,7 +78,8 @@ export function activate(context: vscode.ExtensionContext): void {
       const root = workspaceRoot();
       const wfPath = resolveWorkflowPathForExecution(root, extractPath(arg)) ?? (await pickWorkflow());
       if (!wfPath) return;
-      const job = (arg && typeof (arg as any).jobId === 'string' ? (arg as any).jobId : undefined)
+      const argObj = arg && typeof arg === 'object' ? arg as Record<string, unknown> : null;
+      const job = (argObj && typeof argObj.jobId === 'string' ? argObj.jobId : undefined)
         ?? jobId
         ?? (await pickJob(wfPath));
       if (!job) return;
@@ -277,7 +280,6 @@ function getWorkflowProjectRoot(workflowPath: string): string {
 
 function getGitBranchSnapshot(root: string): { currentBranch?: string; branches: string[] } {
   try {
-    const childProcess = require('child_process') as typeof import('child_process');
     const currentBranch = childProcess.execFileSync('git', ['-C', root, 'branch', '--show-current'], { encoding: 'utf8' }).trim() || undefined;
     const branchOutput = childProcess.execFileSync('git', ['-C', root, 'branch', '--format=%(refname:short)'], { encoding: 'utf8' });
     const branches = Array.from(new Set(
@@ -325,7 +327,7 @@ async function selectProjectFromUser(): Promise<void> {
   const currentRoot = workspaceRoot();
   const startDir = currentRoot
     ? vscode.Uri.file(currentRoot)
-    : vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file(require('os').homedir());
+    : vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file(os.homedir());
 
   const uris = await vscode.window.showOpenDialog({
     canSelectFolders: true,
@@ -394,13 +396,12 @@ function extractPath(arg: unknown): string | undefined {
  * Retorna o primeiro que existir; se nenhum existir, retorna workspaceRoot/.actrc
  */
 function resolveActrcPath(workspaceRoot: string): string {
-  const fsNode = require('fs') as typeof import('fs');
   const candidates = [
     path.join(workspaceRoot, '.actrc'),
     path.join(path.dirname(workspaceRoot), '.actrc'),
     path.join(os.homedir(), '.actrc'),
   ];
-  return candidates.find((p) => fsNode.existsSync(p)) ?? candidates[0];
+  return candidates.find((p) => fs.existsSync(p)) ?? candidates[0];
 }
 
 async function pickWorkflow(): Promise<string | undefined> {
@@ -415,7 +416,7 @@ async function pickWorkflow(): Promise<string | undefined> {
     return;
   }
   if (paths.length === 1) return paths[0];
-  const items = paths.map((p) => ({ label: require('path').basename(p), description: p, _path: p }));
+  const items = paths.map((p) => ({ label: path.basename(p), description: p, _path: p }));
   const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Selecione o workflow' });
   return pick?._path;
 }
@@ -541,9 +542,8 @@ function openWebviewPanel(context: vscode.ExtensionContext, initialView: string,
           if (tab === 'actrc') {
             // Procura .actrc em vários locais: projeto → pai do projeto → home (~/.actrc)
             foundFilePath = resolveActrcPath(root);
-            const fsNode = require('fs') as typeof import('fs');
-            if (fsNode.existsSync(foundFilePath)) {
-              rows = fsNode.readFileSync(foundFilePath, 'utf-8')
+            if (fs.existsSync(foundFilePath)) {
+              rows = fs.readFileSync(foundFilePath, 'utf-8')
                 .split('\n')
                 .map((l: string) => l.trim())
                 .filter((l: string) => l && !l.startsWith('#'))
@@ -554,7 +554,7 @@ function openWebviewPanel(context: vscode.ExtensionContext, initialView: string,
             if (clientFilePath?.trim() && filePath) {
               await rememberEnvFilePath(root, tab, filePath);
             }
-            if (filePath && require('fs').existsSync(filePath)) {
+            if (filePath && fs.existsSync(filePath)) {
               foundFilePath = filePath;
               const map = envManager.read(filePath);
               rows = mapToEnvRows(map);
@@ -603,7 +603,7 @@ function openWebviewPanel(context: vscode.ExtensionContext, initialView: string,
               .map((r) => r.key.trim())
               .filter(Boolean)
               .join('\n');
-            require('fs').writeFileSync(filePath, content + '\n', 'utf-8');
+            fs.writeFileSync(filePath, content + '\n', 'utf-8');
           } else {
             const requestedFilePath = clientFilePath?.trim();
             const filePath = requestedFilePath
@@ -696,7 +696,6 @@ function mapToEnvRows(map: Map<string, string>): { key: string; value: string }[
 }
 
 function resolveEnvEditorFilePath(root: string, tab: string, clientFilePath?: string): string | undefined {
-  const fsNode = require('fs') as typeof import('fs');
   if (clientFilePath?.trim()) return envManager.resolveFilePath(root, clientFilePath.trim());
 
   const selectedPath = tab === 'env'
@@ -716,7 +715,7 @@ function resolveEnvEditorFilePath(root: string, tab: string, clientFilePath?: st
         ? envManager.getDefaultFilePath(root, 'secretsFile')
         : undefined;
 
-  return defaultPath && fsNode.existsSync(defaultPath) ? defaultPath : undefined;
+  return defaultPath && fs.existsSync(defaultPath) ? defaultPath : undefined;
 }
 
 function createWorkflowDispatchPayload(inputs: Record<string, string | number | boolean>, ref = 'main'): string {
@@ -726,6 +725,6 @@ function createWorkflowDispatchPayload(inputs: Record<string, string | number | 
     ref: normalizedRef,
     inputs,
   };
-  require('fs').writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+  fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
   return filePath;
 }

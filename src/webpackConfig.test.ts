@@ -1,5 +1,6 @@
 import webpack from 'webpack';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const createConfig = require('../webpack.webview.config.js') as (
   env: unknown,
   argv: { mode?: string },

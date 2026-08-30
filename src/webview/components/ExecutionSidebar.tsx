@@ -170,9 +170,25 @@ export function ExecutionSidebar() {
   if (outerJobs.length === 0 || execution.status === 'idle') return null;
 
   const toggleOuter = (id: string) =>
-    setExpandedOuter(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpandedOuter(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
+      return n;
+    });
   const toggleInner = (id: string) =>
-    setExpandedInner(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpandedInner(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
+      return n;
+    });
 
   const selectInnerJob = (ij: GraphNode) => {
     const isSelected = logFilter?.jobId === ij.id && !logFilter.stepLabel;

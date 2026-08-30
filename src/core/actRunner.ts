@@ -59,12 +59,6 @@ const RE_JOB_FAIL     = /^\[([^\]]+)\]\s+(?:[🐳🚀🏁]\s+)?(?:❌\s+)?Job\s+
 // Any bracket-prefixed line — used to detect outer-job transitions
 const RE_ANY_BRACKET  = /^\[([^\]]+)\]/;
 
-function parseJobStep(bracket: string): { jobId: string; stepId: string } {
-  const slash = bracket.indexOf('/');
-  if (slash < 0) return { jobId: bracket.trim(), stepId: 'unknown' };
-  return { jobId: bracket.slice(0, slash).trim(), stepId: bracket.slice(slash + 1).trim() };
-}
-
 /**
  * Para brackets de reusable workflows (3 partes: OuterJob/ReusableWorkflow/InnerJob),
  * retorna o InnerJob como effectiveJobId (é o job que "possui" o step/log).

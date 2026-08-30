@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
 import { workflowParser } from '../core/workflowParser';
 import { workflowValidator } from '../core/workflowValidator';

@@ -35,7 +35,7 @@ export function WebhookSimulator() {
         payload: { eventType, eventPayload: parsed },
       });
       setError(null);
-    } catch (e) {
+    } catch {
       setError('JSON inválido — corrija o payload antes de simular.');
     }
   };

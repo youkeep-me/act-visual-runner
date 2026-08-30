@@ -49,7 +49,7 @@ export function App() {
   useEffect(() => {
     const initial = window.__INITIAL_VIEW__;
     if (initial) setView(initial as AppView);
-  }, []);
+  }, [setView]);
 
   // Escutar eventos do Extension Host
   useEffect(() => {
