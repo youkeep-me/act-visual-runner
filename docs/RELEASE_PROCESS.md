@@ -1,6 +1,6 @@
 # Release Process
 
-This project distributes release builds as VSIX assets attached to GitHub Releases. The workflow uses the official `@vscode/vsce` CLI and runs automatically when a matching version tag is pushed.
+This project distributes release builds as VSIX assets attached to GitHub Releases and publishes them to Open VSX. The workflow uses the official `@vscode/vsce` and `ovsx` CLIs and runs automatically when a matching version tag is pushed.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ This project distributes release builds as VSIX assets attached to GitHub Releas
 2. Run the local checks:
 
    ```sh
-   npm install
+   npm ci
    npm run typecheck
    npm test -- --runInBand
    npm run build
@@ -42,9 +42,22 @@ Replace `<version>` with the exact value from `package.json`, such as `2.11.0`.
 
 ## GitHub Actions release
 
-The `Release VSIX` workflow runs for tags matching `v*`. It checks out the tagged commit, installs dependencies with `npm install`, runs typecheck and tests, verifies that the tag equals `v` plus the package version, builds and packages the VSIX, and creates a GitHub Release with generated notes. The VSIX is uploaded as a release asset.
+The `Release VSIX` workflow runs for tags matching `v*`. It checks out the tagged commit, installs the lockfile dependencies with `npm ci`, runs typecheck and tests, verifies that the tag equals `v` plus the package version, builds and packages the VSIX, and creates a GitHub Release with generated notes. The VSIX is uploaded as a release asset.
 
 A manual workflow dispatch is also available, but the tag/version check means it should be used only when the selected ref is the intended release tag.
+
+## Open VSX publishing setup
+
+Open VSX publishing uses a dedicated GitHub Environment named `release`.
+
+1. Create or verify the `vscode-youkeep` namespace at [open-vsx.org](https://open-vsx.org/).
+2. Create an Open VSX access token with permission to publish extensions in that namespace.
+3. In the repository, open **Settings → Environments** and create an environment named `release`.
+4. Add an environment secret named `OVSX_PAT` containing the Open VSX token.
+5. In **Settings → Secrets and variables → Actions → Variables**, add `ENABLE_OPENVSX_PUBLISH` with the value `true`.
+6. Configure required reviewers for the `release` environment if publishing should require explicit approval. Do not add the token as a normal repository secret as well.
+
+The `publish-openvsx` job is skipped unless the repository variable is exactly `true`, so upstream can merge the workflow without creating the environment or configuring marketplace credentials. When enabled, it downloads the VSIX from the GitHub Release and uses the `release` environment for the Open VSX token. A missing or invalid token fails the publishing job rather than silently reporting success.
 
 ## Download and install
 
@@ -68,4 +81,4 @@ If a release already exists and the asset needs to be replaced, delete the incor
 
 ## Marketplace publishing
 
-GitHub Releases and the VSIX asset are the project's release mechanism. Publishing to the Visual Studio Marketplace is separate and is not performed by this workflow. If Marketplace publishing is enabled later, use a protected `VSCE_PAT` repository secret and a separate, reviewed workflow step using `vsce publish`.
+Open VSX publishing is enabled by this workflow as described above. Publishing to the Visual Studio Marketplace is not enabled yet. If it is added later, use a separate protected secret and a reviewed workflow step with `vsce publish`; do not reuse `OVSX_PAT`.
