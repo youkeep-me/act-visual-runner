@@ -434,6 +434,7 @@ async function pickJob(wfPath: string): Promise<string | undefined> {
 async function safeRun(fn: () => Promise<unknown>): Promise<void> {
   try {
     await fn();
+    sendWorkflowSnapshot();
   } catch (err) {
     vscode.window.showErrorMessage(`Erro: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -633,6 +634,18 @@ function openWebviewPanel(context: vscode.ExtensionContext, initialView: string,
         });
         break;
       }
+      case 'command:deleteHistories': {
+        const { executionIds } = msg.payload;
+        await historyService.deleteByIds(executionIds);
+        webviewPanel?.webview.postMessage({
+          type: 'state:snapshot',
+          payload: { history: historyService.getAllForWebview() },
+        });
+        break;
+      }
+      case 'command:refreshHistory':
+        sendWorkflowSnapshot();
+        break;
       case 'state:request':
         webviewPanel?.webview.postMessage({
           type: 'state:snapshot',
