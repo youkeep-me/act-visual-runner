@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ActRunner } from '../core/actRunner';
 import { eventBus } from '../core/eventBus';
 
