@@ -3,7 +3,7 @@ import { useExecutionStore, type WorkflowListItem } from '../store/executionStor
 import { t } from '../i18n';
 
 export function WorkflowLauncherSidebar() {
-  const { workflows, selectedWorkflowPath, repository, setSelectedWorkflowPath, openWorkflowRunDialog } = useExecutionStore();
+  const { workflows, selectedWorkflowPath, repository, execution, setSelectedWorkflowPath, openWorkflowRunDialog } = useExecutionStore();
   const [isOpen, setIsOpen] = useState(true);
 
   const selectRepository = () => {
@@ -64,24 +64,46 @@ export function WorkflowLauncherSidebar() {
           </div>
         ) : workflows.map((workflow) => {
           const active = selectedWorkflowPath === workflow.filePath;
+          const isRunning = execution.status === 'running' && execution.workflowPath === workflow.filePath;
           return (
-            <button
+            <div
               key={workflow.filePath}
-              type="button"
-              title={workflow.valid ? `${t('Run')} ${workflow.fileName}${workflow.inputs.length ? ` ${t('with inputs')}` : ''}` : workflow.error}
               style={{
                 ...styles.item,
                 ...(active ? styles.itemActive : {}),
                 ...(!workflow.valid ? styles.itemInvalid : {}),
               }}
-              onClick={() => runWorkflow(workflow)}
             >
-              <span style={styles.icon}>{workflow.valid ? '▶' : '!'}</span>
-              <span style={styles.itemText}>
-                <span style={styles.itemName}>{workflow.name}</span>
-                <span style={styles.itemMeta}>{workflow.fileName} · {workflow.jobs} job{workflow.jobs === 1 ? '' : 's'}{workflow.inputs.length ? ` · ${workflow.inputs.length} input${workflow.inputs.length === 1 ? '' : 's'}` : ''}</span>
-              </span>
-            </button>
+              <button
+                type="button"
+                title={workflow.valid ? `${t('Run')} ${workflow.fileName}${workflow.inputs.length ? ` ${t('with inputs')}` : ''}` : workflow.error}
+                style={styles.itemButton}
+                onClick={() => runWorkflow(workflow)}
+                disabled={!workflow.valid || isRunning}
+              >
+                <span style={{ ...styles.icon, ...(isRunning ? styles.runningIcon : {}) }}>
+                  {isRunning ? <span className="workflow-running-spinner" aria-hidden="true" /> : workflow.valid ? '▶' : '!'}
+                </span>
+                <span style={styles.itemText}>
+                  <span style={styles.itemName}>{workflow.name}</span>
+                  <span style={styles.itemMeta}>{workflow.fileName} · {workflow.jobs} job{workflow.jobs === 1 ? '' : 's'}{workflow.inputs.length ? ` · ${workflow.inputs.length} input${workflow.inputs.length === 1 ? '' : 's'}` : ''}</span>
+                </span>
+              </button>
+              {isRunning && (
+                <button
+                  type="button"
+                  style={styles.stopButton}
+                  title={t('Stop workflow execution')}
+                  aria-label={`${t('Stop workflow execution')} ${workflow.name}`}
+                  onClick={() => window.__vscode__?.postMessage({
+                    type: 'command:stop',
+                    payload: { executionId: execution.executionId ?? '' },
+                  })}
+                >
+                  ■
+                </button>
+              )}
+            </div>
           );
         })}
       </div>
@@ -186,7 +208,7 @@ const styles: Record<string, React.CSSProperties> = {
   item: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
     width: '100%',
     minHeight: 54,
     padding: '8px 10px',
@@ -195,11 +217,38 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'transparent',
     color: '#c9d1d9',
     textAlign: 'left',
+  },
+  itemButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+    minHeight: 38,
+    padding: 0,
+    border: 0,
+    background: 'transparent',
+    color: 'inherit',
+    textAlign: 'left',
     cursor: 'pointer',
   },
   itemActive: { background: '#161b22', borderColor: '#30363d' },
   itemInvalid: { color: '#f85149', cursor: 'not-allowed', opacity: 0.8 },
   icon: { width: 16, flexShrink: 0, color: '#3fb950', fontSize: 11 },
+  runningIcon: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  stopButton: {
+    width: 26,
+    height: 26,
+    flexShrink: 0,
+    border: '1px solid #da3633',
+    borderRadius: 4,
+    background: '#3d1719',
+    color: '#ff7b72',
+    cursor: 'pointer',
+    fontSize: 11,
+    lineHeight: 1,
+    padding: 0,
+  },
   itemText: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 },
   itemName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, fontWeight: 700 },
   itemMeta: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#8b949e', fontSize: 11 },

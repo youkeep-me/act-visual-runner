@@ -50,3 +50,17 @@ button {
 .node-running {
   animation: pulse 1.5s ease-in-out infinite;
 }
+
+@keyframes workflowRunningSpin {
+  to { transform: rotate(360deg); }
+}
+
+.workflow-running-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(88, 166, 255, 0.3);
+  border-top-color: #58a6ff;
+  border-radius: 50%;
+  animation: workflowRunningSpin 1s linear infinite;
+}

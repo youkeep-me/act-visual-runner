@@ -16,6 +16,7 @@ const portuguese: Record<string, string> = {
     'Delete selected': 'Deletar selecionados',
     'Select all runs on this page': 'Selecionar todas as execuções desta página',
     'Select run': 'Selecionar execução',
+    'Stop workflow execution': 'Parar execução do workflow',
     'Repository': 'Repositório',
     'Select repository': 'Selecionar repositório',
     'Cancel': 'Cancelar',
