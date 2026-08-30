@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import type { ActEvent, StepUpdatePayload, JobUpdatePayload, LogPayload, ExecutionStartPayload, ExecutionEndPayload, SummaryUpdatePayload } from '../../types/events.types';
+import type { ActEvent, ExecutionStartPayload } from '../../types/events.types';
 import type { ExecutionGraphHistory, ExecutionGraphSnapshot, ExecutionRecord } from '../../types/execution.types';
-import type { WorkflowGraph } from '../../types/workflow.types';
 
 export type NodeStatus = 'idle' | 'running' | 'success' | 'failed' | 'skipped';
 export type AppView = 'graph' | 'history' | 'env' | 'summary' | 'analytics';

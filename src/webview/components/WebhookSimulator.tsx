@@ -36,7 +36,7 @@ export function WebhookSimulator() {
         payload: { eventType, eventPayload: parsed },
       });
       setError(null);
-    } catch (e) {
+    } catch {
       setError(t('Invalid JSON - fix the payload before simulating.'));
     }
   };
