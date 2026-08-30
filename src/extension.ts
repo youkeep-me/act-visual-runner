@@ -207,11 +207,13 @@ export function deactivate(): void {
 
 function workspaceRoot(): string {
   // Prefere o projeto selecionado manualmente no explorer
-  return (
+  const root = (
     workflowExplorer.getProjectRoot() ??
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
     ''
   );
+  historyService.setWorkspaceRoot(root || undefined);
+  return root;
 }
 
 function getWorkflowSummaries(): Array<{ name: string; filePath: string; fileName: string; jobs: number; valid: boolean; inputs: Array<{ name: string; description?: string; required: boolean; default?: string | number | boolean; type: 'string' | 'choice' | 'boolean' | 'number' | 'environment'; options?: string[] }>; error?: string }> {
