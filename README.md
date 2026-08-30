@@ -1,4 +1,4 @@
-# Act/Run - GitHub Actions Visual locally - VS Code Extension
+# Act Visual Runner - VS Code Extension to visually run GH Actions locally
 
 [![Visual Studio Marketplace Version](https://vsmarketplacebadges.dev/version/fean-developer.act-visual-runner.svg)](https://img.shields.io/visual-studio-marketplace/v/fean-developer.act-visual-runner?style=flat-square&label=Visual%20Studio%20Marketplace)
 [![Release](https://img.shields.io/github/v/release/fean-developer/vscode-act-runner-local?style=flat-square&label=release)](https://flat.badgen.net/github/release/fean-developer/act-visual-runner)

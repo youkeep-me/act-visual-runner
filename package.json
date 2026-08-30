@@ -2,7 +2,7 @@
   "name": "act-visual-runner",
   "displayName": "Act/Run - GitHub Actions Visual locally",
   "description": "%extension.description%",
-  "version": "2.10.33",
+  "version": "2.11.0",
   "publisher": "fean-developer",
   "engines": {
     "vscode": "^1.85.0"
