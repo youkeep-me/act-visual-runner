@@ -31,6 +31,7 @@ jobs:
           npm test -- --runInBand
 
       - name: Verify tag version
+        if: ${{ github.actor != 'nektos/act' }}
         env:
           TAG_NAME: ${{ github.ref_name }}
         run: |
@@ -45,6 +46,7 @@ jobs:
         run: npm run package
 
       - name: Create GitHub Release
+        if: ${{ github.actor != 'nektos/act' }}
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
