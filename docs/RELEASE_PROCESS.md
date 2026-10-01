@@ -16,6 +16,7 @@ This project distributes release builds as VSIX assets attached to GitHub Releas
 
    ```sh
    npm ci
+   npm run lint
    npm run typecheck
    npm test -- --runInBand
    npm run build
@@ -50,7 +51,7 @@ A manual workflow dispatch is also available, but the tag/version check means it
 
 Open VSX publishing uses a dedicated GitHub Environment named `release`.
 
-1. Create or verify the `vscode-youkeep` namespace at [open-vsx.org](https://open-vsx.org/).
+1. Create or verify the `fean-developer` namespace at [open-vsx.org](https://open-vsx.org/).
 2. Create an Open VSX access token with permission to publish extensions in that namespace.
 3. In the repository, open **Settings → Environments** and create an environment named `release`.
 4. Add an environment secret named `OVSX_PAT` containing the Open VSX token.
